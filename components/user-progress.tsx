@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import Image from "next/image";
 import { InfinityIcon } from "lucide-react";
 import { courses } from "@/db/schema";
+import { StreakWidget } from "./streak/StreakWidget";
 
 type Props = {
   activeCourse: typeof courses.$inferSelect;
@@ -58,6 +59,7 @@ export const UserProgress = ({
           )}
         </Button>
       </Link>
+      <StreakWidget size="md" showActions={true} />
     </div>
   );
 };

@@ -23,6 +23,8 @@ const LessonIdPage = async ({ params }: Props) => {
   if (!lesson || !userProgress) {
     redirect("/learn");
   }
+  const isAssessment =
+    lesson?.unit?.title?.startsWith("Assessment - ") || false;
 
   const initialPercentage =
     (lesson.challenges.filter((challenge) => challenge.completed).length /
@@ -35,6 +37,7 @@ const LessonIdPage = async ({ params }: Props) => {
       initialHearts={userProgress.hearts}
       initialPercentage={initialPercentage}
       userSubscription={userSubscription}
+      isAssessment={isAssessment}
     />
   );
 };

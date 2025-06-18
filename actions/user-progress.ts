@@ -12,6 +12,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { upsertChallengeProgressForAssessment } from "./challenge-progress";
 
 export const upsertUserProgress = async (courseId: number) => {
   console.log("upsert");
@@ -54,11 +55,20 @@ export const upsertUserProgress = async (courseId: number) => {
   redirect("/learn");
 };
 
-export const reduceHearts = async (challengeId: number) => {
+export const reduceHearts = async (
+  challengeId: number,
+  isAssessment?: boolean
+) => {
   const { userId } = await auth();
   if (!userId) {
     throw new Error("Unauthorized");
   }
+
+  // For assessments, don't reduce hearts but still track the attempt
+  if (isAssessment) {
+    return upsertChallengeProgressForAssessment(challengeId, false);
+  }
+
   const currentUserProgress = await getUserProgress();
   const userSubscription = await getUserSubscription();
 
@@ -69,6 +79,7 @@ export const reduceHearts = async (challengeId: number) => {
   if (!challenge) {
     throw new Error("Challenge not found");
   }
+
   const lessonId = challenge.lessonId;
   const existingChallengeProgress = await db.query.challengeProgress.findFirst({
     where: and(
@@ -76,6 +87,24 @@ export const reduceHearts = async (challengeId: number) => {
       eq(challengeProgress.challengeId, challengeId)
     ),
   });
+
+  if (existingChallengeProgress) {
+    await db
+      .update(challengeProgress)
+      .set({
+        attempted: true,
+        completed: false,
+      })
+      .where(eq(challengeProgress.id, existingChallengeProgress.id));
+  } else {
+    await db.insert(challengeProgress).values({
+      challengeId,
+      userId,
+      attempted: true,
+      completed: false,
+    });
+  }
+
   const isPractice = !!existingChallengeProgress;
   if (isPractice) {
     return { error: "practice" };
@@ -88,6 +117,7 @@ export const reduceHearts = async (challengeId: number) => {
   if (currentUserProgress.hearts === 0) {
     return { error: "hearts" };
   }
+
   if (userSubscription?.isActive) {
     return { error: "subscription" };
   }
@@ -98,13 +128,7 @@ export const reduceHearts = async (challengeId: number) => {
       hearts: Math.max(currentUserProgress.hearts - 1, 0),
     })
     .where(eq(userProgress.userId, userId));
-  await db
-    .update(challengeProgress)
-    .set({
-      attempted: true,
-    })
-    //@ts-ignore
-    .where(eq(challengeProgress.id, existingChallengeProgress?.id));
+
   revalidatePath("/shop");
   revalidatePath("/learn");
   revalidatePath("/quests");

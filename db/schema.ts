@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   integer,
   pgEnum,
@@ -7,6 +7,8 @@ import {
   text,
   boolean,
   timestamp,
+  uniqueIndex,
+  date,
 } from "drizzle-orm/pg-core";
 
 export const courses = pgTable("courses", {
@@ -141,4 +143,49 @@ export const userSubscription = pgTable("user_subscription", {
   stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
   stripePriceId: text("stripe_price_id").notNull(),
   stripeCurrentPeriodEnd: timestamp("stripe_current_period_end").notNull(),
+});
+
+export const userStreaks = pgTable("user_streaks", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  currentStreak: integer("current_streak").default(0).notNull(),
+  longestStreak: integer("longest_streak").default(0).notNull(),
+  lastCompletedDate: date("last_completed_date"),
+  streakStartDate: date("streak_start_date"),
+  totalDaysLearned: integer("total_days_learned").default(0).notNull(),
+  streakFreezeUsed: boolean("streak_freeze_used").default(false).notNull(),
+  streakFreezeCount: integer("streak_freeze_count").default(0).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`NOW()`)
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .default(sql`NOW()`)
+    .notNull(),
+});
+
+export const streakActivities = pgTable("streak_activities", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  date: date("date").notNull(),
+  lessonsCompleted: integer("lessons_completed").default(0).notNull(),
+  challengesCompleted: integer("challenges_completed").default(0).notNull(),
+  timeSpentMinutes: integer("time_spent_minutes").default(0).notNull(),
+  xpEarned: integer("xp_earned").default(0).notNull(),
+  createdAt: timestamp("created_at")
+    .default(sql`NOW()`)
+    .notNull(),
+});
+
+export const streakMilestones = pgTable("streak_milestones", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  streakLength: integer("streak_length").notNull(),
+  achievedAt: timestamp("achieved_at")
+    .default(sql`NOW()`)
+    .notNull(),
+  rewardType: text("reward_type")
+    .$type<"XP" | "BADGE" | "STREAK_FREEZE" | "GEMS">()
+    .notNull(),
+  rewardValue: integer("reward_value").notNull(),
+  claimed: boolean("claimed").default(false).notNull(),
 });

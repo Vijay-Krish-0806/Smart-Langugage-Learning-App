@@ -8,19 +8,18 @@ const LessonPage = async () => {
   const userSubscriptionData = getUserSubscription();
 
   const [lesson, userProgress, userSubscription] = await Promise.all([
-    
     lessonData,
     userProgressData,
     userSubscriptionData,
   ]);
 
-  const isAssessment=lesson?.unitId===1;
-  
-
-
   if (!lesson || !userProgress) {
     redirect("/learn");
   }
+
+  // In LessonPage component
+  const isAssessment =
+    lesson?.unit?.title?.startsWith("Assessment - ") || false;
 
   const initialPercentage =
     (lesson.challenges.filter((challenge) => challenge.completed).length /

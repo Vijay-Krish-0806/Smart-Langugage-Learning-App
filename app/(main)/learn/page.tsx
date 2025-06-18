@@ -12,7 +12,9 @@ import {
 import { redirect } from "next/navigation";
 import { Unit } from "./unit";
 import Promo from "@/components/promo";
-import Quests from "@/components/quests";
+import AIChatModal from "./ai/AIChatModel";
+import { StreakPage } from "@/components/streak/StreakPage";
+import { StreakWidget } from "@/components/streak/StreakWidget";
 
 const LearnPage = async () => {
   const userProgressData = getUserProgress();
@@ -55,10 +57,11 @@ const LearnPage = async () => {
         />
         {!isPro && <Promo />}
 
-        <Quests points={userProgress.points} />
+        <StreakPage />
       </StickyWrapper>
       <FeedWrapper>
         <Header title={userProgress.activeCourse.title} />
+
         {units.map((unit) => (
           <div key={unit.id} className="mb-10">
             <Unit
@@ -73,6 +76,7 @@ const LearnPage = async () => {
           </div>
         ))}
       </FeedWrapper>
+      <AIChatModal />
     </div>
   );
 };

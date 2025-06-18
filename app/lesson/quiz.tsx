@@ -7,7 +7,10 @@ import Header from "./header";
 import QuestionBubble from "./question-bubble";
 import { Challenge } from "./challenge";
 import Footer from "./footer";
-import { upsertChallengeProgress } from "@/actions/challenge-progress";
+import {
+  upsertChallengeProgress,
+  upsertChallengeProgressForAssessment,
+} from "@/actions/challenge-progress";
 import { toast } from "sonner";
 import { reduceHearts } from "@/actions/user-progress";
 import { useWindowSize, useMount } from "react-use";
@@ -88,6 +91,13 @@ const Quiz = ({
     }
   };
 
+  const updateStreak = async () => {
+    await fetch("/api/streak", {
+      method: "POST",
+      body: JSON.stringify({ lessonsCompleted: 1 }),
+    });
+  };
+
   // Check if we've completed all challenges
   const isCompleted = activeIndex >= challenges.length || !challenge;
   React.useEffect(() => {
@@ -152,6 +162,7 @@ const Quiz = ({
     setActiveIndex((current) => {
       // Check if we're moving to the last challenge
       if (current + 1 >= challenges.length) {
+        updateStreak();
         playAudio(finishAudioRef);
       }
       return current + 1;
@@ -166,23 +177,37 @@ const Quiz = ({
   const onContinue = () => {
     if (!selectedOption) return;
 
-    if (status === "wrong") {
-      if (isAssessment) onNext();
+    // For assessments, always proceed to next question regardless of correctness
+    if (isAssessment && (status === "wrong" || status === "correct")) {
+      onNext();
       setStatus("none");
       setSelectedOption(undefined);
       return;
     }
+
+    // For regular lessons, handle wrong answers normally
+    if (status === "wrong") {
+      setStatus("none");
+      setSelectedOption(undefined);
+      return;
+    }
+
+    // For regular lessons, handle correct answers normally
     if (status === "correct") {
       onNext();
       setStatus("none");
       setSelectedOption(undefined);
       return;
     }
+
+    // Initial answer processing
     const correctOption = options.find((option) => option.correct);
     if (!correctOption) return;
+
     if (correctOption.id === selectedOption) {
+      // Correct answer
       startTransition(() => {
-        upsertChallengeProgress(challenge.id)
+        upsertChallengeProgress(challenge.id, isAssessment)
           .then((response) => {
             if (response?.error === "hearts") {
               openHeartsModal();
@@ -199,27 +224,38 @@ const Quiz = ({
           .catch(() => toast.error("Something went wrong. Please try again"));
       });
     } else {
-     
+      // Wrong answer
       startTransition(() => {
-        reduceHearts(challenge.id)
-          .then((response) => {
-            if (response?.error === "hearts") {
-              openHeartsModal();
-              return;
-            }
+        // For assessments, we still need to track the attempt but not reduce hearts
+        if (isAssessment) {
+          // Just mark as attempted without reducing hearts
+          upsertChallengeProgressForAssessment(challenge.id, false) // false = incorrect
+            .then(() => {
+              playAudio(incorrectAudioRef);
+              setStatus("wrong");
+            })
+            .catch(() => toast.error("Something went wrong. Please try again"));
+        } else {
+          // Regular lesson - reduce hearts
+          reduceHearts(challenge.id, isAssessment)
+            .then((response) => {
+              if (response?.error === "hearts") {
+                openHeartsModal();
+                return;
+              }
 
-            playAudio(incorrectAudioRef);
-            setStatus("wrong");
+              playAudio(incorrectAudioRef);
+              setStatus("wrong");
 
-            if (!response?.error) {
-              setHearts((prev) => Math.max(prev - 1, 0));
-            }
-          })
-          .catch(() => toast.error("Something went wrong. Please try again"));
+              if (!response?.error) {
+                setHearts((prev) => Math.max(prev - 1, 0));
+              }
+            })
+            .catch(() => toast.error("Something went wrong. Please try again"));
+        }
       });
     }
   };
-
   return (
     <>
       <audio ref={finishAudioRef} src="/finish.mp3" />

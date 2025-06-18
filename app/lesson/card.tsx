@@ -1,3 +1,4 @@
+
 import { challenges } from "@/db/schema";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -17,8 +18,7 @@ type Props = {
   type: (typeof challenges.$inferSelect)["type"];
 };
 
-const Card = ({
-  id,
+const ChoiceCard: React.FC<Props> = ({
   imageSrc,
   audioSrc,
   text,
@@ -28,64 +28,76 @@ const Card = ({
   disabled,
   status,
   type,
-}: Props) => {
-  const [audio, _, controls] = useAudio({ src: audioSrc || "" });
+}) => {
+  // Only pass audioSrc if non-empty
+  const [audio, , controls] = useAudio({ src: audioSrc as string });
 
   const handleClick = useCallback(() => {
     if (disabled) return;
-    controls.play();
+    if (audioSrc) controls.play();
     onClick();
-  }, [disabled, onClick,controls]);
+  }, [disabled, onClick, controls, audioSrc]);
 
-  useKey(shortcut,handleClick,{},[handleClick])
+  // Keyboard shortcut
+  useKey(shortcut, handleClick, {}, [handleClick]);
 
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "h-full border-2 rounded-xl border-b-4 hover:bg-black/5 p-4 lg:p-6 cursor-pointer active:border-b-2",
-        selected && "border-sky-300 bg-sky-100 hover:bg-sky-100",
-        selected &&
-          status === "correct" &&
-          "bordder-green-300 bg-green-100 hover:bg-green-100",
-        selected &&
-          status === "wrong" &&
-          "border-rose-300 bg-rose-100 hover:bg-rose-100",
-        disabled && "pointer-events-none hover:bg-white",
-        type === "ASSIST" && "lg:p-3 w-full"
+        "group relative h-full border-2 rounded-xl border-b-4 p-4 lg:p-6 cursor-pointer active:border-b-2 transition",
+        disabled && "pointer-events-none opacity-60",
+        selected && "border-sky-400 bg-sky-50",
+        selected && status === "correct" && "border-green-400 bg-green-50",
+        selected && status === "wrong" && "border-rose-400 bg-rose-50",
+        type === "ASSIST" && "flex items-center justify-between lg:p-3 w-full"
       )}
     >
       {audio}
+
+      {/* Image (if available) */}
       {imageSrc && (
-        <div className="relative aspect-square mb-4 max-h-[80px] lg:max-h-[150px] w-full">
-          <Image src={imageSrc} alt={text} fill />
+        <div className="relative aspect-square mb-4 h-[80px] lg:h-[150px] w-full overflow-hidden rounded-lg">
+          <Image
+            src={imageSrc}
+            alt={text}
+            fill
+            sizes="(max-width: 768px) 100vw, 150px"
+            className="object-cover"
+          />
         </div>
       )}
+
+      {/* Text and Shortcut */}
       <div
         className={cn(
           "flex items-center justify-between",
           type === "ASSIST" && "flex-row-reverse"
         )}
       >
-        {type === "ASSIST" && <div />}
+        {type === "ASSIST" && <div className="w-6" />}
+
         <p
           className={cn(
-            "text-neutral-600 text-sm  lg:text-base",
-            selected && "text-sky-500",
-            selected && status === "correct" && "text-green-500",
-            selected && status === "wrong" && "text-rose-500"
+            "text-neutral-700 text-sm lg:text-base",
+            selected && "font-semibold",
+            selected && status === "correct" && "text-green-600",
+            selected && status === "wrong" && "text-rose-600"
           )}
         >
           {text}
         </p>
+
         <div
           className={cn(
-            "lg:w-[30px] lg:h-[30px] w-[20px] h-[20px] border-2 flex items-center justify-center rounded-lg text-neutral-400 lg:text-[15px] text-xs font-semibold",
-            selected && "border-sky-300 text-sky-500 ",
+            "flex-shrink-0 flex items-center justify-center w-[30px] h-[30px] rounded-lg border-2 text-xs font-semibold transition",
+            selected && "border-sky-400 text-sky-400",
             selected &&
               status === "correct" &&
-              "border-green-500 text-green-500",
-            selected && status === "wrong" && "border-rose-500 text-rose-500"
+              "border-green-400 text-green-400",
+            selected && status === "wrong" && "border-rose-400 text-rose-400",
+            !selected &&
+              "border-gray-300 text-gray-500 group-hover:border-gray-400"
           )}
         >
           {shortcut}
@@ -95,4 +107,4 @@ const Card = ({
   );
 };
 
-export default Card;
+export default ChoiceCard;
