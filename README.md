@@ -51,7 +51,7 @@ A full-stack, gamified language learning platform inspired by Duolingo — enhan
 ## 🧑‍💻 Local Setup
 
 ```bash
-git clone https://github.com/your-username/language-saas.git
-cd language-saas
+git clone https://github.com/Vijay-Krish-0806/final-project-1.git
+cd final-project-1
 npm install
 ```
