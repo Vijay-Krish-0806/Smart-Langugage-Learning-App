@@ -51,7 +51,7 @@ A full-stack, gamified language learning platform inspired by Duolingo — enhan
 ## 🧑‍💻 Local Setup
 
 ```bash
-git clone https://github.com/Vijay-Krish-0806/smart-language-learning-app.git
-cd smart-language-learning-app
+git clone https://github.com/Vijay-Krish-0806/Smart-Langugage-Learning-App.git
+cd Smart-Langugage-Learning-App
 npm install
 ```
