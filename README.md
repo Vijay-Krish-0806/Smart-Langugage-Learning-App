@@ -1,4 +1,4 @@
-# 🌍 AI-Powered Language Learning SaaS (Duolingo Clone)
+# 🌍 AI-Powered Language Learning SaaS
 
 A full-stack, gamified language learning platform inspired by Duolingo — enhanced with AI using Google Gemini API to dynamically generate lessons, adapt to user progress, and deliver a personalized experience.
 
@@ -51,7 +51,7 @@ A full-stack, gamified language learning platform inspired by Duolingo — enhan
 ## 🧑‍💻 Local Setup
 
 ```bash
-git clone https://github.com/Vijay-Krish-0806/final-project-1.git
-cd final-project-1
+git clone https://github.com/Vijay-Krish-0806/smart-language-learning-app.git
+cd smart-language-learning-app
 npm install
 ```
